@@ -6,6 +6,9 @@
  * - subtraction (sub, subtract, -)
  * - multiplication (mul, multiply, x, *)
  * - division (div, divide, /)
+ * - modulo (mod, modulo, %)
+ * - exponentiation (pow, power)
+ * - square root (sqrt, squareroot)
  */
 
 function add(a, b) {
@@ -27,6 +30,24 @@ function div(a, b) {
   return a / b;
 }
 
+function modulo(a, b) {
+  if (b === 0) {
+    throw new Error("Modulo by zero is not allowed.");
+  }
+  return a % b;
+}
+
+function power(base, exponent) {
+  return base ** exponent;
+}
+
+function squareRoot(n) {
+  if (n < 0) {
+    throw new Error("Square root of a negative number is not allowed.");
+  }
+  return Math.sqrt(n);
+}
+
 const operationMap = {
   add,
   "+": add,
@@ -40,11 +61,19 @@ const operationMap = {
   div,
   divide: div,
   "/": div,
+  mod: modulo,
+  modulo,
+  "%": modulo,
+  pow: power,
+  power,
+  sqrt: squareRoot,
+  squareroot: squareRoot,
 };
 
 function printUsage() {
-  console.log("Usage: node src/calculator.js <operation> <number1> <number2>");
-  console.log("Operations: add|sub|mul|div (also +, -, *, /)");
+  console.log("Usage: node src/calculator.js <operation> <number1> [number2]");
+  console.log("Operations: add|sub|mul|div|mod|pow|sqrt (also +, -, *, /, %)");
+  console.log("Note: sqrt uses only <number1>.");
 }
 
 function parseNumber(value, label) {
@@ -61,6 +90,9 @@ function calculate(operation, left, right) {
   if (!fn) {
     throw new Error(`Unsupported operation: "${operation}".`);
   }
+  if (op === "sqrt" || op === "squareroot") {
+    return fn(left);
+  }
   return fn(left, right);
 }
 
@@ -70,18 +102,26 @@ function runCli(argv = process.argv.slice(2)) {
     return 0;
   }
 
-  if (argv.length !== 3) {
-    console.error("Error: expected exactly 3 arguments.");
+  const [operation, ...operands] = argv;
+  const op = String(operation || "").toLowerCase();
+  const fn = operationMap[op];
+  if (!fn) {
+    console.error(`Error: Unsupported operation: "${operation}".`);
+    printUsage();
+    return 1;
+  }
+  const unaryOperation = op === "sqrt" || op === "squareroot";
+  const expectedOperandCount = unaryOperation ? 1 : 2;
+  if (operands.length !== expectedOperandCount) {
+    console.error(`Error: expected exactly ${expectedOperandCount} operand(s) for "${operation}".`);
     printUsage();
     return 1;
   }
 
-  const [operation, rawLeft, rawRight] = argv;
-
   try {
-    const left = parseNumber(rawLeft, "number1");
-    const right = parseNumber(rawRight, "number2");
-    const result = calculate(operation, left, right);
+    const left = parseNumber(operands[0], "number1");
+    const right = unaryOperation ? undefined : parseNumber(operands[1], "number2");
+    const result = calculate(op, left, right);
     console.log(result);
     return 0;
   } catch (error) {
@@ -100,6 +140,9 @@ module.exports = {
   sub,
   mul,
   div,
+  modulo,
+  power,
+  squareRoot,
   calculate,
   runCli,
 };

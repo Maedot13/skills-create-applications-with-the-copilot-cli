@@ -3,6 +3,9 @@ const {
   sub,
   mul,
   div,
+  modulo,
+  power,
+  squareRoot,
   calculate,
   runCli,
 } = require("../calculator");
@@ -37,6 +40,37 @@ describe("calculator basic operations", () => {
   });
 });
 
+describe("calculator extended operations", () => {
+  test("matches image examples for extended operations", () => {
+    expect(modulo(5, 2)).toBe(1);
+    expect(power(2, 3)).toBe(8);
+    expect(squareRoot(16)).toBe(4);
+  });
+
+  test("computes modulo", () => {
+    expect(modulo(10, 3)).toBe(1);
+    expect(modulo(15, 5)).toBe(0);
+  });
+
+  test("throws on modulo by zero", () => {
+    expect(() => modulo(10, 0)).toThrow("Modulo by zero is not allowed.");
+  });
+
+  test("computes power", () => {
+    expect(power(2, 3)).toBe(8);
+    expect(power(5, 0)).toBe(1);
+  });
+
+  test("computes square root", () => {
+    expect(squareRoot(16)).toBe(4);
+    expect(squareRoot(2)).toBeCloseTo(1.41421356);
+  });
+
+  test("throws for square root of negative numbers", () => {
+    expect(() => squareRoot(-1)).toThrow("Square root of a negative number is not allowed.");
+  });
+});
+
 describe("calculate dispatcher", () => {
   test("supports image examples and standard operation names", () => {
     expect(calculate("add", 2, 3)).toBe(5);
@@ -52,10 +86,18 @@ describe("calculate dispatcher", () => {
     expect(calculate("x", 3, 4)).toBe(12);
     expect(calculate("/", 9, 3)).toBe(3);
     expect(calculate("divide", 8, 2)).toBe(4);
+    expect(calculate("modulo", 10, 4)).toBe(2);
+    expect(calculate("%", 10, 4)).toBe(2);
+    expect(calculate("pow", 2, 4)).toBe(16);
+    expect(calculate("power", 3, 2)).toBe(9);
+    expect(calculate("sqrt", 25)).toBe(5);
+    expect(calculate("mod", 5, 2)).toBe(1);
+    expect(calculate("pow", 2, 3)).toBe(8);
+    expect(calculate("sqrt", 16)).toBe(4);
   });
 
   test("throws for unsupported operations", () => {
-    expect(() => calculate("mod", 9, 2)).toThrow('Unsupported operation: "mod".');
+    expect(() => calculate("noop", 9, 2)).toThrow('Unsupported operation: "noop".');
   });
 });
 
@@ -91,6 +133,12 @@ describe("CLI behavior", () => {
     expect(errorSpy).toHaveBeenCalled();
   });
 
+  test("returns 1 for invalid argument count on unary operation", () => {
+    const code = runCli(["sqrt", "9", "1"]);
+    expect(code).toBe(1);
+    expect(errorSpy).toHaveBeenCalled();
+  });
+
   test("returns 1 for invalid numbers", () => {
     const code = runCli(["mul", "abc", "3"]);
     expect(code).toBe(1);
@@ -101,5 +149,11 @@ describe("CLI behavior", () => {
     const code = runCli(["div", "10", "0"]);
     expect(code).toBe(1);
     expect(errorSpy).toHaveBeenCalled();
+  });
+
+  test("returns 0 for valid square root input", () => {
+    const code = runCli(["sqrt", "16"]);
+    expect(code).toBe(0);
+    expect(logSpy).toHaveBeenCalledWith(4);
   });
 });
